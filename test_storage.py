@@ -1,0 +1,43 @@
+from unittest import TestCase
+import unittest
+
+import store
+import tempfile
+
+import shutil
+import os
+
+class TestLocalStorage(TestCase):
+    def setUp(self):
+        self.tempdir=tempfile.mkdtemp()
+        self.localstore = store.LocalStore(self.tempdir)
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
+
+    def testCreateFile(self):
+        "create a simple file"
+        self.localstore['testfile'] =b"testcontent"
+        lst=os.listdir(self.tempdir)
+        self.assertIn("testfile", lst)
+
+    def testRealBinaryFile(self):
+        f = open("tests/files/404ok.png", 'rb')
+        self.localstore['testfile'] = f.read()
+        lst=os.listdir(self.tempdir)
+        self.assertIn("testfile", lst)
+
+
+    def testCreateFile_cannot_escape_directory(self):
+        "one should not be able to move outside the base directory of localstore"
+        self.assertRaises(Exception, self.localstore.__setitem__, '../testfile',  "testcontent")
+
+    def testCreateFile_create_path(self):
+        "creating a file also creates the path leading to the file"
+
+        #this should not raise:
+        self.localstore['foo/bar/testfile'] = b"testcontent"
+        self.assertTrue(self.localstore['foo/bar/testfile']==b"testcontent")
+
+
+if __name__ == "__main__":
+    unittest.main()
