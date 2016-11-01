@@ -30,13 +30,13 @@ class LocalStore(Store):
         return path
 
     def __getitem__(self, key):
-        #TODO: check that filepath is in a subdir of basedir #SECURITY
+
        filepath = self._path(key)
        f = open(filepath, 'rb')
        return f.read()
 
     def __setitem__(self, key, content):
-       #TODO: check that filepath is a subdir of basedir #SECURITY
+
        filepath = self._path(key)
        basedir = os.path.split(filepath)[0]
        if not os.path.exists(basedir):
@@ -45,19 +45,6 @@ class LocalStore(Store):
        f.write(content)
        f.close()
 
-    @staticmethod
-    def genkey(album, filename, thumbnail=False):
-        assert("/" not in album)
-        assert("/" not in filename)
-        if thumbnail:
-           key = os.path.join("thumbnail", album, filename)
-        else:
-           key = os.path.join(album, filename)
-        return key
-
-    def view_url(self, filekey):
-        url="/render/%s"%(filekey)
-        return url
 
 class S3Store(Store):
     def __init__(self, bucketname):
@@ -76,20 +63,8 @@ class S3Store(Store):
         s3key = self.bucket.new_key(key)
         s3key.set_contents_from_string(content)
 
-    @staticmethod
-    def genkey(album, filename, thumbnail=False):
-        if thumbnail:
-            key = 'thumbnail/%s/%s'%(album, filename)
-        else:
-            key = '%s/%s'%(album, filename)
-        return key
-
-    def view_url(self, filekey):
-        url = self.s3.generate_url(3600 , "GET" ,  self.bucketname,filekey )
-        return url
-
-    def list(self, albumname):
-        return self.bucket.list(albumname)
+    def list(self, dirname):
+        return self.bucket.list(dirname)
 
 def storefactory(settings):
     store_type = settings['store.type']
